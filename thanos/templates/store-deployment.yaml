@@ -35,14 +35,18 @@ spec:
             - "store"
             - "--log.level={{ .Values.store.logLevel }}"
             - "--data-dir=/var/thanos/store"
-            {{- if .Values.s3.enabled }}
-            - "--objstore.config-file=/thanos-s3/s3.yaml"
+            {{- if .Values.objectStorageConfig.enabled }}
+            - "--objstore.config-file=/thanos-s3/{{ .Values.objectStorageConfig.key }}"
             {{- end }}
             {{- if .Values.store.tlsServer.enabled }}
             - "--grpc-server-tls-cert=/thanos-tls-server/server.crt"
             - "--grpc-server-tls-key=/thanos-tls-server/server.key"
             - "--grpc-server-tls-client-ca=/thanos-tls-server/ca.crt"
             {{- end }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            fsGroup: 65534
           ports:
             - name: http
               containerPort: {{ .Values.store.deployment.container.httpPort }}
@@ -53,13 +57,13 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/thanos/store
-            {{- if .Values.s3.enabled }}
-            - name: {{ include "thanos.fullname" . }}-thanos-s3-config
-              mountPath: /thanos-s3
-            {{- end }}
             {{- if .Values.store.tlsServer.enabled }}
             - name: {{ include "thanos.fullname" . }}-thanos-store-tls-server
               mountPath: /thanos-tls-server
+            {{- end }}
+            {{- if .Values.objectStorageConfig.enabled }}
+            - name: thanos-objstore-config
+              mountPath: /thanos-s3
             {{- end }}
           resources:
 {{ toYaml .Values.store.resources | indent 12 }}
@@ -78,14 +82,14 @@ spec:
       volumes:
         - name: data
           emptyDir: {}
-      {{- if .Values.s3.enabled }}
-        - name: {{ include "thanos.fullname" . }}-thanos-s3-config
-          configMap:
-            name: {{ include "thanos.fullname" . }}-thanos-s3-config
-      {{- end }}
       {{- if .Values.store.tlsServer.enabled }}
         - name: {{ include "thanos.fullname" . }}-thanos-store-tls-server
           secret:
             secretName: {{ include "thanos.fullname" . }}-thanos-store-tls-server
+      {{- end }}
+      {{- if .Values.objectStorageConfig.enabled }}
+        - name: thanos-objstore-config
+          secret:
+            secretName: {{ .Values.objectStorageConfig.name }}
       {{- end }}
 {{- end -}}

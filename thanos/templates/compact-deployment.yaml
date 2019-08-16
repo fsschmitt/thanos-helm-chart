@@ -45,6 +45,10 @@ spec:
             {{- if .Values.s3.enabled }}
             - "--objstore.config-file=/thanos-s3/s3.yaml"
             {{- end }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            fsGroup: 65534
           ports:
             - name: http
               containerPort: {{ .Values.compact.deployment.container.httpPort }}

@@ -37,6 +37,9 @@ spec:
             {{- range .Values.query.stores }}
             - "--store={{ . }}"
             {{- end }}
+            {{- if .Values.store.enabled }}
+            - "--store={{ include "thanos.fullname" . }}-store-grpc.{{ .Release.Namespace }}.svc.cluster.local:10901"
+            {{- end }}
             - "--query.replica-label={{ .Values.query.queryReplicaLabel }}"
             {{- if .Values.query.tlsClient.enabled }}
             - "--grpc-client-tls-secure"
@@ -50,6 +53,10 @@ spec:
             - "--grpc-server-tls-key=/thanos-tls-server/server.key"
             - "--grpc-server-tls-client-ca=/thanos-tls-server/ca.crt"
             {{- end }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            fsGroup: 65534
           ports:
             - name: http
               containerPort: {{ .Values.query.deployment.container.httpPort }}

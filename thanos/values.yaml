@@ -11,13 +11,10 @@ image:
 nameOverride: ""
 fullnameOverride: ""
 
-s3:
+objectStorageConfig:
   enabled: false
-  bucket: ""
-  endpoint: ""
-  insecure: false
-  signatureV2: true
-  encryptSse: false
+  name: thanos-objstore-config
+  key: thanos.yaml
 
 # Thanos store configuration
 store:
